@@ -2,81 +2,59 @@
 
 /**
  * 使 CI 支持 Smarty 第三方樣版引擎.
+ * 用來取代內建 parser lib.
  */
-class Template {
+require_once APPPATH . 'third_party/Smarty-3.1.11/libs/Smarty.class.php';
 
-	public function __construct() {}
+class Template extends Smarty {
 
-	/**
-	 * 同等 $smarty->fetch();
-	 * 
-	 * @param  string $template [description]
-	 * @param  array  $data     [description]
-	 * @return [type]           [description]
-	 */
-	public function fetch( $template = '', $data = array() ) {
-		$smarty = $this->_create_smarty_lib();
+	private $CI;
+	
+	public function __construct() {
 
-		// 一個一個 將data 變量 assign 至 smarty 樣版裡.
-		foreach ( array_keys( $data ) as $index => $key_name ) {
-			$smarty->assign( $key_name, $data[$key_name] );
+		parent::__construct();
+
+		$this->CI              =& get_instance();
+		$this->left_delimiter  = '{';
+		$this->right_delimiter = '}';
+		$this->compile_dir     = APPPATH . 'cache/smarty_compile_dir';
+		$this->cache_dir       = APPPATH . 'cache/smarty_cache_dir';
+		$this->template_dir    = APPPATH . 'views';
+		$this->caching         = false;
+
+		if ( ! file_exists( $this->compile_dir ) ) {
+			mkdir( $this->compile_dir, 0777, true );
 		}
-
-		$smarty->assign( 'CI', $CI =& get_instance() );
-
-		return $smarty->fetch( $template . '.html' );
+		if ( ! file_exists( $this->cache_dir ) ) {
+			mkdir( $this->cache_dir, 0777, true );
+		}
 	}
 
 	/**
-	 * 同等 $smarty->display();
+	 * 透過 smarty lib 來取代 parser lib 的接口.
 	 * 
 	 * @param  string $template [description]
 	 * @param  array  $params   [description]
 	 * @return [type]           [description]
 	 */
-	public function display( $template = '', $params = array() ) {
-		// 初始化 smarty
-		$smarty = $this->_create_smarty_lib();
-		// 基本配置
-		$smarty->assign( 'TEMPLATE', $params );
-		$smarty->assign( 'CI', $CI =& get_instance() );
+	public function parse( $template = '', $params = array(), $return = false ) {
 
 		// 從控制器 assign 進來的變數, 也要一個一個 assign 至 smarty 樣版裡.
-		foreach ( array_keys( $params['data'] ) as $index => $key_name ) {
-			$smarty->assign( $key_name, $params['data'][$key_name] );
+		foreach ( array_keys( $params ) as $index => $key_name ) {
+			$this->assign( $key_name, $params[$key_name] );
 		}
 
 		// 輸出視圖
-		$static_template = $smarty->fetch( $template . '.html' );
-		$CI->output->set_output( $static_template );
+		$template_string = $this->fetch( $template . '.html' );
+
+		if ( $return === false ) {
+			$this->CI->output->set_output( $template_string );
+		}
+		else {
+			return $template_string;
+		}
 
 		return $this;
-	}
-
-	/**
-	 * 實例化 Smarty
-	 * 
-	 * @return [type] [description]
-	 */
-	private function _create_smarty_lib() {
-		require_once APPPATH . 'third_party/Smarty-3.1.11/libs/Smarty.class.php';
-
-		$smarty = new Smarty();
-		$smarty->left_delimiter  = '{';
-		$smarty->right_delimiter = '}';
-		$smarty->compile_dir     = APPPATH . 'cache/smarty_compile_dir';
-		$smarty->cache_dir       = APPPATH . 'cache/smarty_cache_dir';
-		$smarty->template_dir    = APPPATH . 'views';
-		$smarty->caching         = FALSE;
-
-		if ( ! file_exists( $smarty->compile_dir ) ) {
-			mkdir( $smarty->compile_dir, 0777, true );
-		}
-		if ( ! file_exists( $smarty->cache_dir ) ) {
-			mkdir( $smarty->cache_dir, 0777, true );
-		}
-
-		return $smarty;
 	}
 }
 
