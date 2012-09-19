@@ -1,9 +1,14 @@
 <?php if ( ! defined( 'BASEPATH' ) ) exit( 'No direct script access allowed' );
 
 /**
- * 使 CI 支持 Smarty 第三方樣版引擎.
- * 用來取代內建 parser lib.
+ * zh: 使 CI 支持 Smarty 第三方樣版引擎.
+ * 用來取代內建 VIEW引擎 (即 Parser library).
+ * ------------------
+ * en: This library enable Codeigniter VIEW to support Smarty syntax.
+ * You can use this library instead of CI Parser library.
  */
+
+// 可能需要依照自己下載的smarty版本來對此require_once的路徑作些修改.
 require_once APPPATH . 'third_party/Smarty-3.1.11/libs/Smarty.class.php';
 
 class Template extends Smarty {
@@ -15,13 +20,18 @@ class Template extends Smarty {
 		parent::__construct();
 
 		$this->CI              =& get_instance();
+
+		//# built-in variables
 		$this->left_delimiter  = '{';
 		$this->right_delimiter = '}';
 		$this->compile_dir     = APPPATH . 'cache/smarty_compile_dir';
 		$this->cache_dir       = APPPATH . 'cache/smarty_cache_dir';
 		$this->template_dir    = APPPATH . 'views';
 		$this->caching         = false;
+		$this->compile_check   = true;
+		//
 
+		//# default folders
 		if ( ! file_exists( $this->compile_dir ) ) {
 			mkdir( $this->compile_dir, 0777, true );
 		}
@@ -31,7 +41,8 @@ class Template extends Smarty {
 	}
 
 	/**
-	 * 透過 smarty lib 來取代 parser lib 的接口.
+	 * zh: 透過 smarty library 來取代 parser library 的接口.
+	 * en: You can use this library instead of CI Parser library.
 	 * 
 	 * @param  string $template [description]
 	 * @param  array  $params   [description]
